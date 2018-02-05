@@ -50,8 +50,8 @@
                   <Font size="32.0" />
                </font>
             </Label>
-            <Button fx:id="start" layoutX="901.0" layoutY="151.0" mnemonicParsing="false" onAction="#startGame" text="Ready to play" />
-            <Button fx:id="putCard" layoutX="762.0" layoutY="151.0" mnemonicParsing="false" onAction="#putCard" text="Put card" />
+            <Button fx:id="start" layoutX="901.0" layoutY="151.0" mnemonicParsing="false" onMousePressed="#startGame"  text="Ready to play" />
+            <Button fx:id="putCard" layoutX="762.0" layoutY="151.0" mnemonicParsing="false"   text="Put card" />
          </children>
       </AnchorPane>
    </bottom>

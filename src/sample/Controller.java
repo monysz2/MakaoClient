@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -13,7 +15,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.URL;
@@ -21,10 +25,10 @@ import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import javafx.event.EventHandler;
+import javafx.stage.Stage;
 
 public class Controller implements Initializable{
-    Socket socket = null;
-    Scanner in = null;
+    BufferedReader in = null;
     PrintWriter out = null;
     @FXML
     HBox player1Cards;
@@ -44,16 +48,26 @@ public class Controller implements Initializable{
     Label state = new Label();
     @FXML
             ImageView userFieldToPut;
-    int stat;
+    int stat,strike=0;
+    String response = null;
+    String cardToPut = null;
     LinkedList<Button> cards = new LinkedList<>();
-    public Controller() throws IOException {
+    Manager manager;
+
+    public Controller(BufferedReader reader, PrintWriter writer) throws IOException {
+        this.in = reader;
+        this.out = writer;
     }
+
+    public Controller() throws IOException{}
+
+
+
     @FXML
-    void getCard()
-    {
+    void getCard() throws IOException {
         out.println("1");
         Button toAdd = new Button();
-        String card = new String(in.next());
+        String card = in.readLine();
         ImageView image = new ImageView("cards/"+card);
         image.setFitHeight(100);
         image.setFitWidth(80);
@@ -65,60 +79,68 @@ public class Controller implements Initializable{
             }
         });
         cards.add(toAdd);
-        displaySet(toAdd);
-        stat=1;
-        state.setText("Player2 move");
-        waitForTurn();
+        displaySet();
+        getCard.setDisable(true);
 
     }
-    @FXML
-    void putCard()
-    {
-        String card = userFieldToPut.getImage().getUrl();
 
-            if(stat==2) {
-                out.println("2");
-                String[] abc = card.split("/");
-                out.println(abc[10].substring(5));
-                String approval = in.next();
-                if (Integer.parseInt(approval) == 1) {
-                    table.setImage(new Image("cards/" + in.next()));
-                    System.out.println("123");
-                    // blockUser();
-                } else
-                    state.setText("Wrong choice!");
-                stat=1;
-            }else state.setText("Wait for Player 2");
-            waitForTurn();
 
-    }
-    void blockUser()
-    {
-        for(Button button : cards)
-        {
-            button.disableProperty();
 
-        }
-        getCard.disableProperty();
-    }
-    void waitForTurn()
-    {
-        table.setImage(new Image("cards/"+in.next()));
-        stat=2;
-    }
     void displayCardToPut(String card)
     {
         userFieldToPut.setImage(new Image("cards/"+card));
     }
-    void displaySet(Button toDisplay)
+    void displaySet()
     {
 
-            player1Cards.getChildren().addAll(toDisplay);
+            player1Cards.getChildren().addAll(cards);
+
+    }
+    void clearSet()
+    {
+            player1Cards.getChildren().removeAll(cards);
+    }
+    void disableButtons()
+    {
+        for(Button button : cards)
+        {
+            button.setDisable(true);
+        }
+    }
+
+    void enableButtons()
+    {
+        for(Button button : cards)
+        {
+            button.setDisable(false);
+        }
+    }
+void addCardToSet(String card)
+{
+    Button toAdd = new Button();
+    ImageView image = new ImageView("cards/"+card);
+    image.setFitHeight(100);
+    image.setFitWidth(80);
+    toAdd.setGraphic(image);
+    toAdd.setOnMouseClicked(new EventHandler<javafx.scene.input.MouseEvent>() {
+        @Override
+        public void handle(javafx.scene.input.MouseEvent event) {
+            putCard(image.getImage().getUrl());
+            clearSet();
+            cards.remove(toAdd);
+            displaySet();
+        }
+    });
+    cards.add(toAdd);
+}
+    void putCard(String card)
+    {
+        String[] abc = card.split("/");
+        cardToPut = abc[10];
 
     }
 @FXML
-    void startGame()
-    {
+    void startGame() throws IOException {
         //stat = Integer.parseInt(in.next());
         //out.println("3");
         //state.setText("Waiting for player 2");
@@ -128,9 +150,10 @@ public class Controller implements Initializable{
 
         for(int i=0; i<5; i++)
         {
+            //1 = ready
             out.println("1");
             Button toAdd = new Button();
-            String card = new String(in.next());
+            String card=new String(in.readLine());
             ImageView image = new ImageView("cards/"+card);
             image.setFitHeight(100);
             image.setFitWidth(80);
@@ -139,15 +162,26 @@ public class Controller implements Initializable{
                 @Override
                 public void handle(javafx.scene.input.MouseEvent event) {
                     displayCardToPut(card);
+                    clearSet();
+                    cards.remove(toAdd);
+                    displaySet();
                 }
             });
             cards.add(toAdd);
-            displaySet(toAdd);
+
+
+
+
+
 
         }
+    displaySet();
         if(stat==1)
         {
-            waitForTurn();
+
+           disableButtons();
+
+
         }
 
 
@@ -156,15 +190,14 @@ public class Controller implements Initializable{
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        Platform.setImplicitExit(false);
         try {
-            socket = new Socket("localhost", 6666);
-            in = new Scanner(socket.getInputStream());
-            out = new PrintWriter(socket.getOutputStream(), true);
-            table.setImage(new Image("cards/" + in.next()));
-            stat = Integer.parseInt(in.next());
-
+            manager = new Manager(Main.socket);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        manager.controller = this;
+        manager.start();
+
     }
 }
