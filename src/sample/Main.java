@@ -38,6 +38,9 @@ public class Main extends Application {
 
         socket = new Socket("localhost", 6666);
 
+
+
+
         launch(args);
 
 
