@@ -174,7 +174,7 @@ public class Controller implements Initializable {
 
     void displayValue() throws IOException {
         int valueToDisplay = Integer.parseInt(in.readLine());
-        if(valueToDisplay==10)
+        if(valueToDisplay==11)
         {
             value.setText("Jack");
         }else
@@ -269,6 +269,7 @@ public class Controller implements Initializable {
                     break;
                 case 8:
                     displayValue();
+                    break;
                 case 4:
                     table.setImage(new Image("cards/" + in.readLine()));
                     break;
